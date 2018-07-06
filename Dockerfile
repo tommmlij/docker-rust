@@ -2,21 +2,30 @@ FROM debian:stretch-slim
 
 ENV BUILD_DIR=/usr/src/target/release/
 
+# Supressing warnings when installing via apt headless
 ARG DEBIAN_FRONTEND="noninteractive"
+
+# Needed for building and using the container
 ARG BUILD_REQUIREMENTS="ca-certificates gnupg2 curl gcc libc6-dev file"
+
+# Can be removed after building
 ARG BUILD_REMOVES="ca-certificates gnupg2 curl file"
 
+# Installing all requirments and using rustup.sh to install rust
 RUN \
 apt-get update -qq  < /dev/null > /dev/null && \
 apt-get install -qq --no-install-recommends --no-install-suggests $BUILD_REQUIREMENTS < /dev/null > /dev/null && \
-curl -s https://static.rust-lang.org/rustup.sh | sh -s -- --disable-sudo --channel=nightly; \
+curl -s https://static.rust-lang.org/rustup.sh | sh -s -- --disable-sudo --channel=stable; \
 apt-get purge -y --auto-remove curl ca-certificates 
 
+# Copy the project into the workingdir when building a dependent container
 ONBUILD WORKDIR /usr/src
 ONBUILD COPY ./src ./src
 ONBUILD COPY ./Cargo.* ./
 
 ONBUILD RUN mkdir /app
 
+# Test and build
+# Final executables are moved to /app via unstable cargo option
 ONBUILD RUN cargo test --release
 ONBUILD RUN cargo build --release --out-dir /app -Z unstable-options
