@@ -9,14 +9,14 @@ ARG DEBIAN_FRONTEND="noninteractive"
 ARG BUILD_REQUIREMENTS="ca-certificates gnupg2 curl gcc libc6-dev file"
 
 # Can be removed after building
-ARG BUILD_REMOVES="ca-certificates gnupg2 curl file"
+ARG BUILD_REMOVES="gnupg2 curl file"
 
 # Installing all requirments and using rustup.sh to install rust
 RUN \
 apt-get update -qq  < /dev/null > /dev/null && \
 apt-get install -qq --no-install-recommends --no-install-suggests $BUILD_REQUIREMENTS < /dev/null > /dev/null && \
 curl -s https://static.rust-lang.org/rustup.sh | sh -s -- --disable-sudo --channel=stable; \
-apt-get purge -y --auto-remove curl ca-certificates 
+apt-get purge -y --auto-remove $BUILD_REMOVES 
 
 # Copy the project into the workingdir when building a dependent container
 ONBUILD WORKDIR /usr/src
