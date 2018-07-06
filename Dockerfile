@@ -26,6 +26,17 @@ ONBUILD COPY ./Cargo.* ./
 ONBUILD RUN mkdir /app
 
 # Test and build
-# Final executables are moved to /app via unstable cargo option
-ONBUILD RUN cargo test --release
-ONBUILD RUN cargo build --release --out-dir /app -Z unstable-options
+ONBUILD RUN cargo test --release --target-dir ${BUILD_DIR}
+ONBUILD RUN cargo build --release --target-dir ${BUILD_DIR}
+ONBUILD RUN find ${BUILD_DIR} \
+                -regextype egrep \
+                # The interesting binaries are all directly in ${BUILD_DIR}.
+                #-maxdepth 1 \
+                # Well, binaries are executable.
+                -executable \
+                # Well, binaries are files.
+                -type f \
+                # Filter out tests.
+                ! -regex ".*\-[a-fA-F0-9]{16,16}$" \
+                # Copy the matching files into /app.
+                -exec cp {} /app \;
